@@ -18,6 +18,9 @@ interface BlockedCallDao {
     @Query("SELECT COUNT(*) FROM blocked_calls WHERE timestamp >= :sinceTimestamp")
     fun getBlockedCountSinceFlow(sinceTimestamp: Long): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM blocked_calls WHERE timestamp >= :sinceTimestamp")
+    suspend fun getBlockedCountSince(sinceTimestamp: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRecord(record: BlockedCallRecord): Long
 

@@ -6,6 +6,9 @@ import com.callshield.app.data.repository.CallDefenseRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
+import com.callshield.app.service.CallShieldWidgetProvider
+import com.callshield.app.service.ThreatDigestScheduler
+
 class AegisApplication : Application() {
 
     private val applicationScope = CoroutineScope(Dispatchers.IO)
@@ -24,6 +27,12 @@ class AegisApplication : Application() {
         super.onCreate()
         instance = this
         _repository = repository
+
+        // 1. Initialize periodic non-spammy daily and weekly threat digests
+        ThreatDigestScheduler.scheduleAllDigests(this)
+
+        // 2. Synchronize Home Screen widgets
+        CallShieldWidgetProvider.updateAllWidgets(this)
     }
 
     companion object {

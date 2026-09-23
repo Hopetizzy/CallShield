@@ -8,6 +8,7 @@ import android.telecom.TelecomManager
 import android.util.Log
 import com.callshield.app.AegisApplication
 import com.callshield.app.data.local.entity.BlockedCallRecord
+import com.callshield.app.engine.AdaptiveSubnetManager
 import com.callshield.app.engine.ContactWhitelistManager
 import com.callshield.app.engine.HeuristicPatternEngine
 import com.callshield.app.engine.NumberNormalizer

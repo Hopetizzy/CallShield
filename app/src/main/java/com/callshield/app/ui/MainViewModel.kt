@@ -68,6 +68,8 @@ class MainViewModel(
     val isSmsShieldEnabled: StateFlow<Boolean> = repository.isSmsShieldEnabled
     val burstThreshold: StateFlow<Int> = repository.burstThreshold
     val currentTheme: StateFlow<AppTheme> = repository.currentTheme
+    val isDailyDigestEnabled: StateFlow<Boolean> = repository.isDailyDigestEnabled
+    val isWeeklyDigestEnabled: StateFlow<Boolean> = repository.isWeeklyDigestEnabled
 
     val allRules: StateFlow<List<FilterRule>> = repository.allRules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -183,6 +185,14 @@ class MainViewModel(
 
     fun toggleSmsShield(enabled: Boolean) {
         repository.setSmsShieldEnabled(enabled)
+    }
+
+    fun toggleDailyDigest(enabled: Boolean) {
+        repository.setDailyDigestEnabled(enabled)
+    }
+
+    fun toggleWeeklyDigest(enabled: Boolean) {
+        repository.setWeeklyDigestEnabled(enabled)
     }
 
     fun toggleRule(ruleId: Long, isEnabled: Boolean) {

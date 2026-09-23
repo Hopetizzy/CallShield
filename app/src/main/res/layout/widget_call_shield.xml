@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+
+    <!-- Top Row: Logo & Grid Status -->
+    <LinearLayout
+        android:id="@+id/layout_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="CALLSHIELD AI"
+            android:textColor="#00F0FF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:typeface="monospace"
+            android:letterSpacing="0.05" />
+
+        <TextView
+            android:id="@+id/widget_status_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GRID: ARMED"
+            android:textColor="#00FF66"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <!-- Bottom Row: Telemetry Counters & 1-Tap Toggle Action -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Stat 1: Calls Dropped -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/widget_stat_bg"
+            android:padding="6dp"
+            android:layout_marginEnd="6dp"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/widget_calls_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#FF0055"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:typeface="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DROPPED"
+                android:textColor="#717F94"
+                android:textSize="8sp"
+                android:typeface="monospace" />
+        </LinearLayout>
+
+        <!-- Stat 2: SMS Quarantined -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/widget_stat_bg"
+            android:padding="6dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/widget_sms_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#9D00FF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:typeface="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SMS ISOLATED"
+                android:textColor="#717F94"
+                android:textSize="8sp"
+                android:typeface="monospace" />
+        </LinearLayout>
+
+        <!-- 1-Tap Arm/Disarm Action Button -->
+        <TextView
+            android:id="@+id/widget_toggle_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_btn_armed"
+            android:text="DISARM"
+            android:textColor="#070A10"
+            android:textStyle="bold"
+            android:typeface="monospace"
+            android:textSize="10sp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+    </LinearLayout>
+
+</RelativeLayout>

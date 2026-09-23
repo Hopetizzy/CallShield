@@ -47,6 +47,12 @@ class CallDefenseRepository(
     private val _lockoutDurationHours = MutableStateFlow(prefs.getInt(KEY_LOCKOUT_HOURS, 24))
     val lockoutDurationHours: StateFlow<Int> = _lockoutDurationHours.asStateFlow()
 
+    private val _isDailyDigestEnabled = MutableStateFlow(prefs.getBoolean(KEY_DAILY_DIGEST, true))
+    val isDailyDigestEnabled: StateFlow<Boolean> = _isDailyDigestEnabled.asStateFlow()
+
+    private val _weeklyDigestEnabled = MutableStateFlow(prefs.getBoolean(KEY_WEEKLY_DIGEST, true))
+    val isWeeklyDigestEnabled: StateFlow<Boolean> = _weeklyDigestEnabled.asStateFlow()
+
     private val _currentTheme = MutableStateFlow(
         try {
             AppTheme.valueOf(prefs.getString(KEY_APP_THEME, AppTheme.CYBERPUNK.name) ?: AppTheme.CYBERPUNK.name)
@@ -60,6 +66,7 @@ class CallDefenseRepository(
         prefs.edit().putBoolean(KEY_SHIELD_ARMED, armed).apply()
         _isShieldArmed.value = armed
         CallDefenseTileService.requestTileUpdate(context)
+        notifyWidgetUpdate()
     }
 
     fun setWhitelistEnabled(enabled: Boolean) {
@@ -87,9 +94,32 @@ class CallDefenseRepository(
         _burstThreshold.value = threshold
     }
 
-    fun setTheme(theme: AppTheme) {
-        prefs.edit().putString(KEY_APP_THEME, theme.name).apply()
-        _currentTheme.value = theme
+    fun setDailyDigestEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DAILY_DIGEST, enabled).apply()
+        _isDailyDigestEnabled.value = enabled
+    }
+
+    fun setWeeklyDigestEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_WEEKLY_DIGEST, enabled).apply()
+        _weeklyDigestEnabled.value = enabled
+    }
+
+    fun notifyWidgetUpdate() {
+        try {
+            val intent = android.content.Intent("com.callshield.app.ACTION_UPDATE_WIDGET")
+            intent.setPackage(context.packageName)
+            context.sendBroadcast(intent)
+        } catch (e: Exception) {
+            // Widget not placed or failed
+        }
+    }
+
+    suspend fun getBlockedCallsCountSince(sinceTimestamp: Long): Int {
+        return blockedCallDao.getBlockedCountSince(sinceTimestamp)
+    }
+
+    suspend fun getQuarantinedSmsCountSince(sinceTimestamp: Long): Int {
+        return quarantinedSmsDao.getQuarantinedSmsCountSince(sinceTimestamp)
     }
 
     // Rules
@@ -135,9 +165,16 @@ class CallDefenseRepository(
     val recentBlockedCalls: Flow<List<BlockedCallRecord>> = blockedCallDao.getRecentBlockedCallsFlow(15)
     val totalBlockedCount: Flow<Int> = blockedCallDao.getTotalBlockedCountFlow()
 
-    suspend fun logBlockedCall(record: BlockedCallRecord): Long = blockedCallDao.insertRecord(record)
+    suspend fun logBlockedCall(record: BlockedCallRecord): Long {
+        val id = blockedCallDao.insertRecord(record)
+        notifyWidgetUpdate()
+        return id
+    }
 
-    suspend fun clearHistory() = blockedCallDao.clearAllRecords()
+    suspend fun clearHistory() {
+        blockedCallDao.clearAllRecords()
+        notifyWidgetUpdate()
+    }
 
     // Quarantined SMS Records
     val allQuarantinedSms: Flow<List<QuarantinedSmsRecord>> = quarantinedSmsDao.getAllQuarantinedSmsFlow()
@@ -147,13 +184,26 @@ class CallDefenseRepository(
 
     suspend fun getAllQuarantinedSmsList(): List<QuarantinedSmsRecord> = quarantinedSmsDao.getAllQuarantinedSmsList()
 
-    suspend fun logQuarantinedSms(record: QuarantinedSmsRecord): Long = quarantinedSmsDao.insertRecord(record)
+    suspend fun logQuarantinedSms(record: QuarantinedSmsRecord): Long {
+        val id = quarantinedSmsDao.insertRecord(record)
+        notifyWidgetUpdate()
+        return id
+    }
 
-    suspend fun deleteQuarantinedSms(record: QuarantinedSmsRecord) = quarantinedSmsDao.deleteRecord(record)
+    suspend fun deleteQuarantinedSms(record: QuarantinedSmsRecord) {
+        quarantinedSmsDao.deleteRecord(record)
+        notifyWidgetUpdate()
+    }
 
-    suspend fun deleteQuarantinedSmsById(id: Long) = quarantinedSmsDao.deleteRecordById(id)
+    suspend fun deleteQuarantinedSmsById(id: Long) {
+        quarantinedSmsDao.deleteRecordById(id)
+        notifyWidgetUpdate()
+    }
 
-    suspend fun clearAllQuarantinedSms() = quarantinedSmsDao.clearAllRecords()
+    suspend fun clearAllQuarantinedSms() {
+        quarantinedSmsDao.clearAllRecords()
+        notifyWidgetUpdate()
+    }
 
     suspend fun markSmsAsRead(id: Long) = quarantinedSmsDao.markAsRead(id)
 
@@ -167,5 +217,7 @@ class CallDefenseRepository(
         private const val KEY_BURST_WINDOW_MIN = "key_burst_window_min"
         private const val KEY_LOCKOUT_HOURS = "key_lockout_hours"
         private const val KEY_APP_THEME = "key_app_theme"
+        private const val KEY_DAILY_DIGEST = "key_daily_digest"
+        private const val KEY_WEEKLY_DIGEST = "key_weekly_digest"
     }
 }

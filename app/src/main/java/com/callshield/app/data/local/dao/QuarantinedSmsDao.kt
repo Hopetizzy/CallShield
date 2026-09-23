@@ -19,6 +19,12 @@ interface QuarantinedSmsDao {
     @Query("SELECT COUNT(*) FROM quarantined_sms WHERE isRead = 0")
     fun getUnreadSmsCountFlow(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM quarantined_sms WHERE timestamp >= :sinceTimestamp")
+    fun getQuarantinedSmsCountSinceFlow(sinceTimestamp: Long): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM quarantined_sms WHERE timestamp >= :sinceTimestamp")
+    suspend fun getQuarantinedSmsCountSince(sinceTimestamp: Long): Int
+
     @Query("SELECT * FROM quarantined_sms ORDER BY timestamp DESC")
     suspend fun getAllQuarantinedSmsList(): List<QuarantinedSmsRecord>
 

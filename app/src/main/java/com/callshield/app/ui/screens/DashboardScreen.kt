@@ -367,6 +367,117 @@ fun DashboardScreen(
                         )
                     )
                 }
+
+                Divider(color = CyberCardBorder)
+
+                // Daily Threat Digest Notification (Zero Spam)
+                val isDailyDigestOn by viewModel.isDailyDigestEnabled.collectAsState()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Daily Threat Digest (8:00 PM)",
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            GlowingBadge(text = "ZERO SPAM", color = NeonEmerald)
+                        }
+                        Text(
+                            text = "Quiet evening summary of blocked threats. Stays 100% silent if 0 calls/SMS were dropped.",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = isDailyDigestOn,
+                        onCheckedChange = { viewModel.toggleDailyDigest(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = CyberBlack,
+                            checkedTrackColor = NeonEmerald,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = CyberSurfaceElevated
+                        )
+                    )
+                }
+
+                Divider(color = CyberCardBorder)
+
+                // Weekly Intelligence Brief
+                val isWeeklyDigestOn by viewModel.isWeeklyDigestEnabled.collectAsState()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Weekly Intelligence Brief (Sunday 6:00 PM)",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "7-day aggregated security report with carrier & VoIP attack frequency",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = isWeeklyDigestOn,
+                        onCheckedChange = { viewModel.toggleWeeklyDigest(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = CyberBlack,
+                            checkedTrackColor = NeonCyan,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = CyberSurfaceElevated
+                        )
+                    )
+                }
+            }
+        }
+
+        // Home Screen Glance Widget Info Card
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(CyberSurfaceElevated)
+                    .border(1.dp, CyberCardBorder, RoundedCornerShape(14.dp))
+                    .padding(14.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Widgets,
+                        contentDescription = "Glance Widget",
+                        tint = NeonCyan,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "HOME SCREEN GLANCE WIDGET",
+                            color = NeonCyan,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "Long-press your home screen → Widgets → CallShield AI to place the live telemetry card with 1-tap arm/disarm.",
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
             }
         }
 
