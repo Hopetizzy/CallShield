@@ -65,6 +65,7 @@ object HeuristicPatternEngine {
                 RuleType.WILDCARD -> matchWildcard(pattern, intl, nat)
                 RuleType.ZERO_REPETITION -> matchZeroRepetition(pattern, digitsOnly)
                 RuleType.EXACT_MATCH -> matchExact(pattern, intl, nat, digitsOnly)
+                RuleType.ADAPTIVE_SUBNET -> matchPrefix(pattern, intl, nat, digitsOnly)
             }
 
             if (isMatch) {

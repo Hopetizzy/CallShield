@@ -50,11 +50,25 @@ class CallDefenseScreeningService : CallScreeningService() {
                     }
                 }
 
-                // 4. Retrieve Active Rules from Local SQLite
+                // 4. Check for Subnet/Trunk Burst Attacks (Adaptive Range Lockout)
+                if (repository.isAutoSubnetShieldEnabled.value && !rawNumber.isNullOrBlank()) {
+                    val burstResult = AdaptiveSubnetManager.recordCallAndCheckBurst(
+                        rawNumber = rawNumber,
+                        threshold = repository.burstThreshold.value,
+                        windowMinutes = repository.burstWindowMinutes.value,
+                        lockoutDurationHours = repository.lockoutDurationHours.value
+                    )
+                    if (burstResult.isBurstTriggered && burstResult.adaptiveRule != null) {
+                        Log.w(TAG, "⚡ BURST ATTACK DETECTED! Locking out trunk: ${burstResult.trunkPrefix}")
+                        repository.addRule(burstResult.adaptiveRule)
+                    }
+                }
+
+                // 5. Retrieve Active Rules from Local SQLite
                 val activeRules = repository.getActiveRules()
                 val blockPrivate = repository.blockPrivateNumbers.value
 
-                // 5. Run Ultra-Fast Heuristic Engine (< 2ms)
+                // 6. Run Ultra-Fast Heuristic Engine (< 2ms)
                 val evalResult = HeuristicPatternEngine.evaluate(
                     rawNumber = rawNumber,
                     rules = activeRules,

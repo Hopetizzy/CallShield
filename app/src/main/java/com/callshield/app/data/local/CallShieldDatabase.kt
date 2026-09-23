@@ -6,23 +6,26 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.callshield.app.data.local.dao.BlockedCallDao
+import com.callshield.app.data.local.dao.QuarantinedSmsDao
 import com.callshield.app.data.local.dao.RuleDao
 import com.callshield.app.data.local.entity.BlockedCallRecord
 import com.callshield.app.data.local.entity.FilterRule
+import com.callshield.app.data.local.entity.QuarantinedSmsRecord
 import com.callshield.app.data.local.entity.RuleType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [FilterRule::class, BlockedCallRecord::class],
-    version = 1,
+    entities = [FilterRule::class, BlockedCallRecord::class, QuarantinedSmsRecord::class],
+    version = 3,
     exportSchema = false
 )
 abstract class CallShieldDatabase : RoomDatabase() {
 
     abstract fun ruleDao(): RuleDao
     abstract fun blockedCallDao(): BlockedCallDao
+    abstract fun quarantinedSmsDao(): QuarantinedSmsDao
 
     companion object {
         @Volatile
@@ -35,6 +38,7 @@ abstract class CallShieldDatabase : RoomDatabase() {
                     CallShieldDatabase::class.java,
                     "callshield_database"
                 )
+                .fallbackToDestructiveMigration()
                 .addCallback(DatabaseCallback(scope))
                 .build()
                 INSTANCE = instance

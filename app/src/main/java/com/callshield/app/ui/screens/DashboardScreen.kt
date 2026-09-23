@@ -42,6 +42,9 @@ fun DashboardScreen(
     val isWhitelistOn by viewModel.isWhitelistEnabled.collectAsState()
     val isBlockPrivateOn by viewModel.blockPrivateNumbers.collectAsState()
 
+    val totalQuarantinedSms by viewModel.totalQuarantinedSmsCount.collectAsState()
+    val isSmsShieldOn by viewModel.isSmsShieldEnabled.collectAsState()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -67,7 +70,7 @@ fun DashboardScreen(
                         letterSpacing = 2.sp
                     )
                     Text(
-                        text = "AUTONOMOUS TELECOM DEFENSE",
+                        text = "AUTONOMOUS TELECOM & SMS DEFENSE",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -102,10 +105,10 @@ fun DashboardScreen(
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 TelemetryCard(
-                    title = "Neutralized",
+                    title = "Calls Dropped",
                     value = totalBlocked.toString(),
                     subtitle = "Calls Intercepted",
                     icon = Icons.Default.Shield,
@@ -113,9 +116,17 @@ fun DashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
                 TelemetryCard(
+                    title = "SMS Quarantined",
+                    value = totalQuarantinedSms.toString(),
+                    subtitle = "Harassment Blocked",
+                    icon = Icons.Default.Message,
+                    accentColor = NeonAmber,
+                    modifier = Modifier.weight(1f)
+                )
+                TelemetryCard(
                     title = "Active Rules",
                     value = activeRulesCount.toString(),
-                    subtitle = "Prefix/Regex Filters",
+                    subtitle = "Defense Filters",
                     icon = Icons.Default.FilterAlt,
                     accentColor = NeonCyan,
                     modifier = Modifier.weight(1f)
@@ -201,6 +212,85 @@ fun DashboardScreen(
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = CyberBlack,
                             checkedTrackColor = NeonCyan,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = CyberSurfaceElevated
+                        )
+                    )
+                }
+
+                Divider(color = CyberCardBorder)
+
+                // Subnet & Burst Auto-Shield (Adaptive Lockout)
+                val isSubnetShieldOn by viewModel.isAutoSubnetShieldEnabled.collectAsState()
+                val activeAdaptiveRules by viewModel.activeAdaptiveRules.collectAsState()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Subnet & Burst Auto-Shield",
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            if (activeAdaptiveRules.isNotEmpty()) {
+                                GlowingBadge(text = "${activeAdaptiveRules.size} LOCKED", color = NeonAmber)
+                            }
+                        }
+                        Text(
+                            text = "Auto-quarantines rotating /24 & /16 trunk numbers when bursts (≥3 calls/10m) are detected",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = isSubnetShieldOn,
+                        onCheckedChange = { viewModel.toggleAutoSubnetShield(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = CyberBlack,
+                            checkedTrackColor = NeonAmber,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = CyberSurfaceElevated
+                        )
+                    )
+                }
+
+                Divider(color = CyberCardBorder)
+
+                // Spam SMS & Recovery Message Interceptor
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Spam SMS & Recovery Interceptor",
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            if (totalQuarantinedSms > 0) {
+                                GlowingBadge(text = "$totalQuarantinedSms THREATS", color = NeonCrimson)
+                            }
+                        }
+                        Text(
+                            text = "Silently quarantines defamation threats, fake BVN freeze scares, and predatory debt messages",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = isSmsShieldOn,
+                        onCheckedChange = { viewModel.toggleSmsShield(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = CyberBlack,
+                            checkedTrackColor = NeonPurple,
                             uncheckedThumbColor = TextMuted,
                             uncheckedTrackColor = CyberSurfaceElevated
                         )

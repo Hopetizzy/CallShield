@@ -11,7 +11,14 @@ class AegisApplication : Application() {
     private val applicationScope = CoroutineScope(Dispatchers.IO)
 
     val database by lazy { CallShieldDatabase.getDatabase(this, applicationScope) }
-    val repository by lazy { CallDefenseRepository(database.ruleDao(), database.blockedCallDao(), this) }
+    val repository by lazy { 
+        CallDefenseRepository(
+            ruleDao = database.ruleDao(),
+            blockedCallDao = database.blockedCallDao(),
+            quarantinedSmsDao = database.quarantinedSmsDao(),
+            context = this
+        ) 
+    }
 
     override fun onCreate() {
         super.onCreate()

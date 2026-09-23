@@ -81,13 +81,36 @@ fun SandboxScreen(viewModel: MainViewModel) {
                     OutlinedTextField(
                         value = sandboxState.testNumberInput,
                         onValueChange = { viewModel.onSandboxInputChange(it) },
-                        placeholder = { Text("e.g. +2342018889999 or 0700000000", color = TextMuted) },
+                        placeholder = { Text("e.g. +2342018889999, FASTLOAN, or 0700000000", color = TextMuted) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = NeonCyan,
                             unfocusedBorderColor = CyberCardBorder,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text(
+                        text = "SIMULATE SMS MESSAGE BODY (OPTIONAL)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = NeonAmber
+                    )
+
+                    OutlinedTextField(
+                        value = sandboxState.testSmsBodyInput,
+                        onValueChange = { viewModel.onSandboxSmsBodyChange(it) },
+                        placeholder = { Text("e.g. 'Your BVN will be blocked today' or 'We will post your picture to contacts'", color = TextMuted) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NeonAmber,
+                            unfocusedBorderColor = CyberCardBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        minLines = 2,
+                        maxLines = 4,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -112,8 +135,14 @@ fun SandboxScreen(viewModel: MainViewModel) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        PresetChip("Standard Mobile", "08031234567") { viewModel.onSandboxInputChange(it) }
-                        PresetChip("Restricted Caller", "RESTRICTED") { viewModel.onSandboxInputChange(it) }
+                        PresetChip("Defamation Threat SMS", "FASTLOAN") {
+                            viewModel.onSandboxInputChange(it)
+                            viewModel.onSandboxSmsBodyChange("Your loan is overdue. We will post your picture to all your whatsapp contacts today!")
+                        }
+                        PresetChip("Fake BVN Freeze SMS", "NIBSS_ALERT") {
+                            viewModel.onSandboxInputChange(it)
+                            viewModel.onSandboxSmsBodyChange("FINAL WARNING: Your BVN block has been initiated with EFCC litigation for default.")
+                        }
                     }
 
                     Button(
@@ -131,6 +160,84 @@ fun SandboxScreen(viewModel: MainViewModel) {
                             fontWeight = FontWeight.Black,
                             fontSize = 13.sp
                         )
+                    }
+                }
+            }
+        }
+
+        // SMS Simulation Result HUD
+        sandboxState.smsResult?.let { smsRes ->
+            item {
+                val smsBannerColor = if (smsRes.isSpam) NeonCrimson else NeonEmerald
+                val smsBannerBg = if (smsRes.isSpam) NeonCrimsonGlow else NeonEmeraldGlow
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(smsBannerBg, CyberSurfaceElevated, CyberSurface)
+                            )
+                        )
+                        .border(1.5.dp, smsBannerColor, RoundedCornerShape(16.dp))
+                        .padding(18.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (smsRes.isSpam) Icons.Default.Warning else Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = smsBannerColor,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = if (smsRes.isSpam) "PREDATORY SMS QUARANTINED OFFLINE" else "SMS ALLOWED (CLEAN)",
+                                        color = smsBannerColor,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 12.sp,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                    Text(
+                                        text = if (smsRes.isSpam) "Isolated from inbox. Zero notification." else "Legitimate text message.",
+                                        color = TextSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+
+                            if (smsRes.threatCategory != null) {
+                                GlowingBadge(text = smsRes.threatCategory.name.replace("_", " "), color = smsBannerColor)
+                            }
+                        }
+
+                        Divider(color = CyberCardBorder)
+
+                        Text(
+                            text = "REASON: ${smsRes.reason}",
+                            color = if (smsRes.isSpam) NeonAmber else NeonEmerald,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            GlowingBadge(text = "SCAN LATENCY: ${smsRes.evaluationTimeMs}ms", color = NeonCyan)
+                            Text("100% OFFLINE SCAN", color = TextMuted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                        }
                     }
                 }
             }
@@ -189,7 +296,7 @@ fun SandboxScreen(viewModel: MainViewModel) {
 
                         Divider(color = CyberCardBorder)
 
-                        // Normalized Formats
+                        // Normalized Formats & Subnet Trunk
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -199,8 +306,38 @@ fun SandboxScreen(viewModel: MainViewModel) {
                                 Text(sandboxState.normalizedInternational.ifEmpty { "N/A" }, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("NATIONAL VARIANT", color = TextMuted, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
-                                Text(sandboxState.normalizedNational.ifEmpty { "N/A" }, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+                                Text("DETECTED TRUNK SUBNET", color = TextMuted, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+                                Text(sandboxState.detectedTrunk.ifEmpty { "N/A" }, color = NeonAmber, fontWeight = FontWeight.Bold, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+                            }
+                        }
+
+                        // Burst Lockout Alert
+                        if (sandboxState.isAdaptiveSubnetTriggered) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(NeonAmber.copy(alpha = 0.15f))
+                                    .border(1.dp, NeonAmber, RoundedCornerShape(8.dp))
+                                    .padding(10.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = NeonAmber,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "⚡ ADAPTIVE SUBNET SHIELD ACTIVATED: Rotating trunk [${sandboxState.detectedTrunk}*] locked out for 24 hours.",
+                                        color = NeonAmber,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
 

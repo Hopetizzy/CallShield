@@ -3,9 +3,11 @@ package com.callshield.app.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import com.callshield.app.data.local.dao.BlockedCallDao
+import com.callshield.app.data.local.dao.QuarantinedSmsDao
 import com.callshield.app.data.local.dao.RuleDao
 import com.callshield.app.data.local.entity.BlockedCallRecord
 import com.callshield.app.data.local.entity.FilterRule
+import com.callshield.app.data.local.entity.QuarantinedSmsRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class CallDefenseRepository(
     private val ruleDao: RuleDao,
     private val blockedCallDao: BlockedCallDao,
+    private val quarantinedSmsDao: QuarantinedSmsDao,
     private val context: Context
 ) {
     private val prefs: SharedPreferences = context.getSharedPreferences("callshield_prefs", Context.MODE_PRIVATE)
@@ -26,6 +29,21 @@ class CallDefenseRepository(
 
     private val _blockPrivateNumbers = MutableStateFlow(prefs.getBoolean(KEY_BLOCK_PRIVATE, true))
     val blockPrivateNumbers: StateFlow<Boolean> = _blockPrivateNumbers.asStateFlow()
+
+    private val _isAutoSubnetShieldEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_SUBNET_ENABLED, true))
+    val isAutoSubnetShieldEnabled: StateFlow<Boolean> = _isAutoSubnetShieldEnabled.asStateFlow()
+
+    private val _isSmsShieldEnabled = MutableStateFlow(prefs.getBoolean(KEY_SMS_SHIELD_ENABLED, true))
+    val isSmsShieldEnabled: StateFlow<Boolean> = _isSmsShieldEnabled.asStateFlow()
+
+    private val _burstThreshold = MutableStateFlow(prefs.getInt(KEY_BURST_THRESHOLD, 3))
+    val burstThreshold: StateFlow<Int> = _burstThreshold.asStateFlow()
+
+    private val _burstWindowMinutes = MutableStateFlow(prefs.getInt(KEY_BURST_WINDOW_MIN, 10))
+    val burstWindowMinutes: StateFlow<Int> = _burstWindowMinutes.asStateFlow()
+
+    private val _lockoutDurationHours = MutableStateFlow(prefs.getInt(KEY_LOCKOUT_HOURS, 24))
+    val lockoutDurationHours: StateFlow<Int> = _lockoutDurationHours.asStateFlow()
 
     fun setShieldArmed(armed: Boolean) {
         prefs.edit().putBoolean(KEY_SHIELD_ARMED, armed).apply()
@@ -42,11 +60,30 @@ class CallDefenseRepository(
         _blockPrivateNumbers.value = block
     }
 
+    fun setAutoSubnetShieldEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_SUBNET_ENABLED, enabled).apply()
+        _isAutoSubnetShieldEnabled.value = enabled
+    }
+
+    fun setSmsShieldEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SMS_SHIELD_ENABLED, enabled).apply()
+        _isSmsShieldEnabled.value = enabled
+    }
+
+    fun setBurstThreshold(threshold: Int) {
+        prefs.edit().putInt(KEY_BURST_THRESHOLD, threshold).apply()
+        _burstThreshold.value = threshold
+    }
+
     // Rules
     val allRules: Flow<List<FilterRule>> = ruleDao.getAllRulesFlow()
     val activeRulesCount: Flow<Int> = ruleDao.getActiveRulesCountFlow()
+    val activeAdaptiveRules: Flow<List<FilterRule>> = ruleDao.getActiveAdaptiveRulesFlow()
 
-    suspend fun getActiveRules(): List<FilterRule> = ruleDao.getActiveRules()
+    suspend fun getActiveRules(): List<FilterRule> {
+        ruleDao.cleanupExpiredRules()
+        return ruleDao.getActiveRules()
+    }
 
     suspend fun addRule(rule: FilterRule): Long = ruleDao.insertRule(rule)
 
@@ -54,9 +91,13 @@ class CallDefenseRepository(
 
     suspend fun deleteRule(rule: FilterRule) = ruleDao.deleteRule(rule)
 
+    suspend fun deleteRuleById(id: Long) = ruleDao.deleteRuleById(id)
+
     suspend fun toggleRule(id: Long, isEnabled: Boolean) = ruleDao.setRuleEnabled(id, isEnabled)
 
     suspend fun incrementRuleMatch(id: Long) = ruleDao.incrementMatchCount(id)
+
+    suspend fun cleanupExpiredRules() = ruleDao.cleanupExpiredRules()
 
     // Blocked Records
     val allBlockedCalls: Flow<List<BlockedCallRecord>> = blockedCallDao.getAllBlockedCallsFlow()
@@ -67,9 +108,32 @@ class CallDefenseRepository(
 
     suspend fun clearHistory() = blockedCallDao.clearAllRecords()
 
+    // Quarantined SMS Records
+    val allQuarantinedSms: Flow<List<QuarantinedSmsRecord>> = quarantinedSmsDao.getAllQuarantinedSmsFlow()
+    val recentQuarantinedSms: Flow<List<QuarantinedSmsRecord>> = quarantinedSmsDao.getRecentQuarantinedSmsFlow(15)
+    val totalQuarantinedSmsCount: Flow<Int> = quarantinedSmsDao.getTotalQuarantinedSmsCountFlow()
+    val unreadSmsCount: Flow<Int> = quarantinedSmsDao.getUnreadSmsCountFlow()
+
+    suspend fun getAllQuarantinedSmsList(): List<QuarantinedSmsRecord> = quarantinedSmsDao.getAllQuarantinedSmsList()
+
+    suspend fun logQuarantinedSms(record: QuarantinedSmsRecord): Long = quarantinedSmsDao.insertRecord(record)
+
+    suspend fun deleteQuarantinedSms(record: QuarantinedSmsRecord) = quarantinedSmsDao.deleteRecord(record)
+
+    suspend fun deleteQuarantinedSmsById(id: Long) = quarantinedSmsDao.deleteRecordById(id)
+
+    suspend fun clearAllQuarantinedSms() = quarantinedSmsDao.clearAllRecords()
+
+    suspend fun markSmsAsRead(id: Long) = quarantinedSmsDao.markAsRead(id)
+
     companion object {
         private const val KEY_SHIELD_ARMED = "key_shield_armed"
         private const val KEY_WHITELIST_ENABLED = "key_whitelist_enabled"
         private const val KEY_BLOCK_PRIVATE = "key_block_private"
+        private const val KEY_AUTO_SUBNET_ENABLED = "key_auto_subnet_enabled"
+        private const val KEY_SMS_SHIELD_ENABLED = "key_sms_shield_enabled"
+        private const val KEY_BURST_THRESHOLD = "key_burst_threshold"
+        private const val KEY_BURST_WINDOW_MIN = "key_burst_window_min"
+        private const val KEY_LOCKOUT_HOURS = "key_lockout_hours"
     }
 }

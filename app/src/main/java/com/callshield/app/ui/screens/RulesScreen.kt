@@ -119,13 +119,17 @@ fun RuleCard(
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
-    val borderColor = if (rule.isEnabled) NeonCyan.copy(alpha = 0.3f) else CyberCardBorder
+    val borderColor = if (rule.isEnabled) {
+        if (rule.ruleType == RuleType.ADAPTIVE_SUBNET) NeonAmber.copy(alpha = 0.4f) else NeonCyan.copy(alpha = 0.3f)
+    } else CyberCardBorder
+
     val badgeColor = when (rule.ruleType) {
         RuleType.PREFIX -> NeonCyan
         RuleType.REGEX -> NeonPurple
         RuleType.ZERO_REPETITION -> NeonAmber
         RuleType.WILDCARD -> NeonEmerald
         RuleType.EXACT_MATCH -> NeonCrimson
+        RuleType.ADAPTIVE_SUBNET -> NeonAmber
     }
 
     Box(
@@ -153,7 +157,7 @@ fun RuleCard(
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
-                    GlowingBadge(text = rule.ruleType.name, color = badgeColor)
+                    GlowingBadge(text = if (rule.ruleType == RuleType.ADAPTIVE_SUBNET) "AUTO-SUBNET" else rule.ruleType.name, color = badgeColor)
                 }
 
                 Switch(
@@ -161,7 +165,7 @@ fun RuleCard(
                     onCheckedChange = onToggle,
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = CyberBlack,
-                        checkedTrackColor = NeonCyan,
+                        checkedTrackColor = if (rule.ruleType == RuleType.ADAPTIVE_SUBNET) NeonAmber else NeonCyan,
                         uncheckedThumbColor = TextMuted,
                         uncheckedTrackColor = CyberSurfaceElevated
                     )
@@ -183,7 +187,7 @@ fun RuleCard(
                 ) {
                     Text(
                         text = "PATTERN: ${rule.pattern}",
-                        color = if (rule.isEnabled) NeonCyan else TextMuted,
+                        color = if (rule.isEnabled) (if (rule.ruleType == RuleType.ADAPTIVE_SUBNET) NeonAmber else NeonCyan) else TextMuted,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 13.sp
@@ -206,7 +210,29 @@ fun RuleCard(
                 )
             }
 
-            if (!rule.isBuiltIn) {
+            // Expiration notice if adaptive rule
+            if (rule.expiresAt != null) {
+                val remainingMs = rule.expiresAt - System.currentTimeMillis()
+                val remainingHours = (remainingMs / (1000 * 60 * 60)).coerceAtLeast(0)
+                val remainingMins = ((remainingMs / (1000 * 60)) % 60).coerceAtLeast(0)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "⏱ Auto-unlocks in ${remainingHours}h ${remainingMins}m",
+                        color = NeonAmber,
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(onClick = onDelete) {
+                        Text("RELEASE TRUNK", color = NeonCrimson, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else if (!rule.isBuiltIn) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

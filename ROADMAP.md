@@ -17,19 +17,19 @@ This document outlines the strategic engineering roadmap, future feature specifi
 ---
 
 ## ⚡ Phase 2: Threat Intelligence & Automated Countermeasures
-*Target: Post-Testing Milestone 1*
+*Target: Active Deployment*
 
-### 1. Subnet & Burst Auto-Shield (Adaptive Block Range)
+### 1. Subnet & Burst Auto-Shield (Adaptive Block Range) — [x] COMPLETED
 * **Problem:** Autodialers rotate the last 2–4 digits of a number range (e.g., `0201-888-0001` to `0201-888-0999`).
 * **Solution:** If 3 or more calls originate from the same `/24` or `/16` trunk within a configurable time window (e.g., 10 minutes), the engine automatically locks out the entire prefix block dynamically for 24–48 hours.
 * **Impact:** Proactively eliminates rotation spoofing before subsequent calls reach the phone.
 
-### 2. Spam SMS & Recovery Message Interceptor
+### 2. Spam SMS & Recovery Message Interceptor — [x] COMPLETED
 * **Problem:** Blocked loan shark callers frequently switch to aggressive, defamatory, or threatening SMS broadcasts.
 * **Solution:** Implement an offline SMS broadcast receiver (`Telephony.Sms.Intents.SMS_RECEIVED_ACTION`) utilizing the same pattern engine and keyword filters to automatically quarantine predatory SMS messages.
 * **Impact:** Complete end-to-end communication defense (Voice + SMS).
 
-### 3. One-Tap FCCPC & NITDA Legal Evidence Exporter
+### 3. One-Tap FCCPC & NITDA Legal Evidence Exporter — [x] COMPLETED
 * **Problem:** Predatory digital lenders operate in direct violation of Nigerian FCCPC and NDPR regulations, but filing complaints manually requires gathering logs.
 * **Solution:** A one-tap export engine in the Threat Ledger that compiles a timestamped, signed PDF/CSV report with carrier data and call frequencies formatted specifically for `lenderstaskforce@fccpc.gov.ng`.
 * **Impact:** Provides legal recourse to report and sanction rogue loan apps.
