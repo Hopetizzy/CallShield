@@ -58,8 +58,10 @@ fun HolographicRadar(
         label = "PulseScale"
     )
 
-    val activeColor = if (isArmed) NeonEmerald else NeonCrimson
-    val activeGlow = if (isArmed) NeonEmeraldGlow else NeonCrimsonGlow
+    val activeColor = if (isArmed) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
+    val surfaceElevated = MaterialTheme.colorScheme.surfaceVariant
+    val surface = MaterialTheme.colorScheme.surface
+    val bg = MaterialTheme.colorScheme.background
 
     Box(
         modifier = modifier
@@ -128,7 +130,7 @@ fun HolographicRadar(
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(CyberSurfaceElevated, CyberSurface, CyberBlack)
+                        colors = listOf(surfaceElevated, surface, bg)
                     )
                 )
                 .padding(12.dp),

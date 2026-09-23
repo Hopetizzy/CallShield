@@ -8,6 +8,8 @@ import com.callshield.app.data.local.dao.RuleDao
 import com.callshield.app.data.local.entity.BlockedCallRecord
 import com.callshield.app.data.local.entity.FilterRule
 import com.callshield.app.data.local.entity.QuarantinedSmsRecord
+import com.callshield.app.service.CallDefenseTileService
+import com.callshield.app.ui.theme.AppTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,9 +47,19 @@ class CallDefenseRepository(
     private val _lockoutDurationHours = MutableStateFlow(prefs.getInt(KEY_LOCKOUT_HOURS, 24))
     val lockoutDurationHours: StateFlow<Int> = _lockoutDurationHours.asStateFlow()
 
+    private val _currentTheme = MutableStateFlow(
+        try {
+            AppTheme.valueOf(prefs.getString(KEY_APP_THEME, AppTheme.CYBERPUNK.name) ?: AppTheme.CYBERPUNK.name)
+        } catch (e: Exception) {
+            AppTheme.CYBERPUNK
+        }
+    )
+    val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
+
     fun setShieldArmed(armed: Boolean) {
         prefs.edit().putBoolean(KEY_SHIELD_ARMED, armed).apply()
         _isShieldArmed.value = armed
+        CallDefenseTileService.requestTileUpdate(context)
     }
 
     fun setWhitelistEnabled(enabled: Boolean) {
@@ -75,6 +87,11 @@ class CallDefenseRepository(
         _burstThreshold.value = threshold
     }
 
+    fun setTheme(theme: AppTheme) {
+        prefs.edit().putString(KEY_APP_THEME, theme.name).apply()
+        _currentTheme.value = theme
+    }
+
     // Rules
     val allRules: Flow<List<FilterRule>> = ruleDao.getAllRulesFlow()
     val activeRulesCount: Flow<Int> = ruleDao.getActiveRulesCountFlow()
@@ -86,6 +103,20 @@ class CallDefenseRepository(
     }
 
     suspend fun addRule(rule: FilterRule): Long = ruleDao.insertRule(rule)
+
+    suspend fun importRules(importedRules: List<FilterRule>): Int {
+        val existingRules = ruleDao.getActiveRules()
+        val existingPatterns = existingRules.map { it.pattern.trim().lowercase() }.toSet()
+
+        val newRulesToInsert = importedRules.filter {
+            !existingPatterns.contains(it.pattern.trim().lowercase())
+        }
+
+        if (newRulesToInsert.isNotEmpty()) {
+            ruleDao.insertRules(newRulesToInsert)
+        }
+        return newRulesToInsert.size
+    }
 
     suspend fun updateRule(rule: FilterRule) = ruleDao.updateRule(rule)
 
@@ -135,5 +166,6 @@ class CallDefenseRepository(
         private const val KEY_BURST_THRESHOLD = "key_burst_threshold"
         private const val KEY_BURST_WINDOW_MIN = "key_burst_window_min"
         private const val KEY_LOCKOUT_HOURS = "key_lockout_hours"
+        private const val KEY_APP_THEME = "key_app_theme"
     }
 }

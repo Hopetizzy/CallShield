@@ -25,18 +25,58 @@ import com.callshield.app.ui.MainViewModel
 import com.callshield.app.ui.components.GlowingBadge
 import com.callshield.app.ui.theme.*
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun RulesScreen(viewModel: MainViewModel) {
+    val context = LocalContext.current
     val rules by viewModel.allRules.collectAsState()
+    val backupState by viewModel.backupState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
+    // File picker for .callshield backup files
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.importRuleBackup(context, uri)
+        }
+    }
+
+    // React to backup state changes
+    LaunchedEffect(backupState.shareIntent) {
+        backupState.shareIntent?.let { intent ->
+            context.startActivity(Intent.createChooser(intent, "Share .callshield Encrypted Backup"))
+            viewModel.resetBackupState()
+        }
+    }
+
+    LaunchedEffect(backupState.importedCount) {
+        backupState.importedCount?.let { count ->
+            Toast.makeText(context, "Successfully imported $count new rules!", Toast.LENGTH_LONG).show()
+            viewModel.resetBackupState()
+        }
+    }
+
+    LaunchedEffect(backupState.errorMessage) {
+        backupState.errorMessage?.let { error ->
+            Toast.makeText(context, "Backup Error: $error", Toast.LENGTH_LONG).show()
+            viewModel.resetBackupState()
+        }
+    }
+
     Scaffold(
-        containerColor = CyberBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = NeonCyan,
-                contentColor = CyberBlack,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Rule")
@@ -52,23 +92,92 @@ fun RulesScreen(viewModel: MainViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Column {
-                    Text(
-                        text = "RULE MATRIX",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
-                        color = NeonCyan,
-                        letterSpacing = 2.sp
-                    )
-                    Text(
-                        text = "PREFIX & PATTERN INTERCEPTOR ENGINE",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        color = TextMuted,
-                        letterSpacing = 1.sp
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "RULE MATRIX",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 2.sp
+                        )
+                        Text(
+                            text = "PREFIX & PATTERN INTERCEPTOR ENGINE",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = TextMuted,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    // Backup Export & Import Action Buttons
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        IconButton(
+                            onClick = { viewModel.exportRuleBackup(context) },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FileUpload,
+                                contentDescription = "Export .callshield",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { importLauncher.launch("*/*") },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FileDownload,
+                                contentDescription = "Import .callshield",
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Encrypted Backup Info Chip
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "AES-256 PORTABILITY: Tap ⇡ to export or ⇣ to import encrypted .callshield rule bundles.",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = TextSecondary
+                        )
+                    }
                 }
             }
 

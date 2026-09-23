@@ -17,6 +17,9 @@ import com.callshield.app.ui.MainViewModelFactory
 import com.callshield.app.ui.navigation.MainNavigation
 import com.callshield.app.ui.theme.CallShieldTheme
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels {
@@ -49,7 +52,8 @@ class MainActivity : ComponentActivity() {
         checkAndRequestPermissions()
 
         setContent {
-            CallShieldTheme {
+            val currentTheme by viewModel.currentTheme.collectAsState()
+            CallShieldTheme(theme = currentTheme) {
                 MainNavigation(viewModel = viewModel)
             }
         }

@@ -1,6 +1,7 @@
 package com.callshield.app.ui.theme
 
 import android.app.Activity
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -30,23 +31,73 @@ private val CyberColorScheme = darkColorScheme(
     outline = CyberCardBorder
 )
 
+private val TitaniumColorScheme = darkColorScheme(
+    primary = TitaniumAccent,
+    onPrimary = TitaniumBackground,
+    primaryContainer = TitaniumSurfaceElevated,
+    onPrimaryContainer = TitaniumAccent,
+    secondary = TitaniumEmerald,
+    onSecondary = TitaniumBackground,
+    secondaryContainer = TitaniumSurfaceElevated,
+    onSecondaryContainer = TitaniumEmerald,
+    tertiary = TitaniumMuted,
+    error = TitaniumCrimson,
+    onError = TitaniumBackground,
+    background = TitaniumBackground,
+    onBackground = TextPrimary,
+    surface = TitaniumSurface,
+    onSurface = TextPrimary,
+    surfaceVariant = TitaniumSurfaceElevated,
+    onSurfaceVariant = TitaniumMuted,
+    outline = TitaniumCardBorder
+)
+
+private val MatrixColorScheme = darkColorScheme(
+    primary = MatrixGreen,
+    onPrimary = MatrixBackground,
+    primaryContainer = MatrixSurfaceElevated,
+    onPrimaryContainer = MatrixGreen,
+    secondary = MatrixGreen,
+    onSecondary = MatrixBackground,
+    secondaryContainer = MatrixSurfaceElevated,
+    onSecondaryContainer = MatrixGreen,
+    tertiary = MatrixDimGreen,
+    error = MatrixRed,
+    onError = MatrixBackground,
+    background = MatrixBackground,
+    onBackground = MatrixGreen,
+    surface = MatrixSurface,
+    onSurface = MatrixGreen,
+    surfaceVariant = MatrixSurfaceElevated,
+    onSurfaceVariant = MatrixDimGreen,
+    outline = MatrixCardBorder
+)
+
 @Composable
 fun CallShieldTheme(
+    theme: AppTheme = AppTheme.CYBERPUNK,
     content: @Composable () -> Unit
 ) {
+    val colorScheme: ColorScheme = when (theme) {
+        AppTheme.CYBERPUNK -> CyberColorScheme
+        AppTheme.TITANIUM -> TitaniumColorScheme
+        AppTheme.MATRIX -> MatrixColorScheme
+    }
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = CyberBackground.toArgb()
-            window.navigationBarColor = CyberBackground.toArgb()
+            val bgArgb = colorScheme.background.toArgb()
+            window.statusBarColor = bgArgb
+            window.navigationBarColor = bgArgb
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
             WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
         }
     }
 
     MaterialTheme(
-        colorScheme = CyberColorScheme,
+        colorScheme = colorScheme,
         typography = CyberTypography,
         content = content
     )

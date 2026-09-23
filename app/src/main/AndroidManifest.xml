@@ -53,6 +53,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- Android Quick Settings Notification Tile -->
+        <service
+            android:name=".service.CallDefenseTileService"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <!-- FileProvider for Sharing Legal Evidence Reports (PDF / CSV) -->
         <provider
             android:name="androidx.core.content.FileProvider"

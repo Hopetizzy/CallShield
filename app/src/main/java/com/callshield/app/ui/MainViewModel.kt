@@ -23,6 +23,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+import android.net.Uri
+import com.callshield.app.engine.BackupImportResult
+import com.callshield.app.engine.RuleBackupManager
+import com.callshield.app.ui.theme.AppTheme
+
+data class BackupState(
+    val isExporting: Boolean = false,
+    val isImporting: Boolean = false,
+    val exportedFile: File? = null,
+    val shareIntent: Intent? = null,
+    val importedCount: Int? = null,
+    val errorMessage: String? = null
+)
+
 data class SandboxState(
     val testNumberInput: String = "",
     val testSmsBodyInput: String = "",
@@ -53,6 +67,7 @@ class MainViewModel(
     val isAutoSubnetShieldEnabled: StateFlow<Boolean> = repository.isAutoSubnetShieldEnabled
     val isSmsShieldEnabled: StateFlow<Boolean> = repository.isSmsShieldEnabled
     val burstThreshold: StateFlow<Int> = repository.burstThreshold
+    val currentTheme: StateFlow<AppTheme> = repository.currentTheme
 
     val allRules: StateFlow<List<FilterRule>> = repository.allRules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -86,9 +101,69 @@ class MainViewModel(
     private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
     val exportState: StateFlow<ExportState> = _exportState.asStateFlow()
 
+    // Backup & Portability State
+    private val _backupState = MutableStateFlow(BackupState())
+    val backupState: StateFlow<BackupState> = _backupState.asStateFlow()
+
     // Threat Simulator / Sandbox State
     private val _sandboxState = MutableStateFlow(SandboxState())
     val sandboxState: StateFlow<SandboxState> = _sandboxState.asStateFlow()
+
+    fun setTheme(theme: AppTheme) {
+        repository.setTheme(theme)
+    }
+
+    fun exportRuleBackup(context: Context, password: String? = null) {
+        viewModelScope.launch {
+            _backupState.update { it.copy(isExporting = true, errorMessage = null) }
+            try {
+                val rules = allRules.value
+                val backupFile = withContext(Dispatchers.IO) {
+                    RuleBackupManager.exportBackup(context, rules, password)
+                }
+                val shareIntent = RuleBackupManager.createShareIntent(context, backupFile)
+                _backupState.update {
+                    it.copy(isExporting = false, exportedFile = backupFile, shareIntent = shareIntent)
+                }
+            } catch (e: Exception) {
+                _backupState.update {
+                    it.copy(isExporting = false, errorMessage = e.localizedMessage ?: "Backup export failed")
+                }
+            }
+        }
+    }
+
+    fun importRuleBackup(context: Context, uri: Uri, password: String? = null) {
+        viewModelScope.launch {
+            _backupState.update { it.copy(isImporting = true, errorMessage = null, importedCount = null) }
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        RuleBackupManager.importBackup(inputStream, password)
+                    } ?: BackupImportResult(isSuccess = false, errorMessage = "Cannot open backup file")
+                }
+
+                if (result.isSuccess) {
+                    val insertedCount = repository.importRules(result.importedRules)
+                    _backupState.update {
+                        it.copy(isImporting = false, importedCount = insertedCount)
+                    }
+                } else {
+                    _backupState.update {
+                        it.copy(isImporting = false, errorMessage = result.errorMessage ?: "Failed to import rules")
+                    }
+                }
+            } catch (e: Exception) {
+                _backupState.update {
+                    it.copy(isImporting = false, errorMessage = e.localizedMessage ?: "Failed to process backup file")
+                }
+            }
+        }
+    }
+
+    fun resetBackupState() {
+        _backupState.value = BackupState()
+    }
 
     fun toggleShield() {
         repository.setShieldArmed(!isShieldArmed.value)

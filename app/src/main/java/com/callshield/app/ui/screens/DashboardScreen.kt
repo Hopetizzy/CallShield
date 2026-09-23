@@ -6,16 +6,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,11 +50,25 @@ fun DashboardScreen(
 
     val totalQuarantinedSms by viewModel.totalQuarantinedSmsCount.collectAsState()
     val isSmsShieldOn by viewModel.isSmsShieldEnabled.collectAsState()
+    val currentTheme by viewModel.currentTheme.collectAsState()
+
+    var showThemeDialog by remember { mutableStateOf(false) }
+
+    if (showThemeDialog) {
+        ThemeSelectorDialog(
+            currentTheme = currentTheme,
+            onThemeSelect = { selectedTheme ->
+                viewModel.setTheme(selectedTheme)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(CyberBackground)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp),
         contentPadding = PaddingValues(top = 24.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -66,7 +86,7 @@ fun DashboardScreen(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,
-                        color = NeonCyan,
+                        color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 2.sp
                     )
                     Text(
@@ -79,10 +99,61 @@ fun DashboardScreen(
                     )
                 }
 
-                GlowingBadge(
-                    text = if (isArmed) "GRID: ONLINE" else "GRID: OFFLINE",
-                    color = if (isArmed) NeonEmerald else NeonCrimson
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = { showThemeDialog = true },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Palette,
+                            contentDescription = "HUD Theme",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    GlowingBadge(
+                        text = if (isArmed) "GRID: ONLINE" else "GRID: OFFLINE",
+                        color = if (isArmed) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+
+        // Quick Settings Tile Notice Banner
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FlashOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = "QUICK SETTINGS TILE: Defense toggle is synced to your Android notification shade for 1-tap arm/disarm.",
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = TextSecondary,
+                        lineHeight = 14.sp
+                    )
+                }
             }
         }
 
@@ -447,9 +518,162 @@ fun DashboardScreen(
                                 fontFamily = FontFamily.Monospace
                             )
                         }
+    }
+}
+
+@Composable
+fun ThemeSelectorDialog(
+    currentTheme: AppTheme,
+    onThemeSelect: (AppTheme) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(CyberSurface)
+                .border(1.dp, CyberCardBorder, RoundedCornerShape(20.dp))
+                .padding(24.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "HUD THEME ENGINE",
+                            color = NeonCyan,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "Select visual telemetry scheme",
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = TextMuted,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
+
+                Divider(color = CyberCardBorder)
+
+                // Theme Options
+                ThemeOptionCard(
+                    title = "CYBERPUNK NEON",
+                    subtitle = "High-Contrast OLED · Cyan & Crimson",
+                    primaryColor = NeonCyan,
+                    accentColor = NeonCrimson,
+                    isSelected = currentTheme == AppTheme.CYBERPUNK,
+                    onClick = { onThemeSelect(AppTheme.CYBERPUNK) }
+                )
+
+                ThemeOptionCard(
+                    title = "STEALTH TITANIUM",
+                    subtitle = "Gunmetal Satin · Platinum & Emerald",
+                    primaryColor = TitaniumAccent,
+                    accentColor = TitaniumEmerald,
+                    isSelected = currentTheme == AppTheme.TITANIUM,
+                    onClick = { onThemeSelect(AppTheme.TITANIUM) }
+                )
+
+                ThemeOptionCard(
+                    title = "HOLOGRAPHIC MATRIX",
+                    subtitle = "Phosphor Green · Terminal Cybergrid",
+                    primaryColor = MatrixGreen,
+                    accentColor = MatrixDimGreen,
+                    isSelected = currentTheme == AppTheme.MATRIX,
+                    onClick = { onThemeSelect(AppTheme.MATRIX) }
+                )
             }
         }
     }
 }
+
+@Composable
+private fun ThemeOptionCard(
+    title: String,
+    subtitle: String,
+    primaryColor: Color,
+    accentColor: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isSelected) primaryColor.copy(alpha = 0.12f) else CyberSurfaceElevated)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) primaryColor else CyberCardBorder,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable { onClick() }
+            .padding(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Color swatches preview
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(primaryColor)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(accentColor)
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = title,
+                        color = if (isSelected) primaryColor else TextPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace
+                    )
+                    Text(
+                        text = subtitle,
+                        color = TextMuted,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Selected",
+                    tint = primaryColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+

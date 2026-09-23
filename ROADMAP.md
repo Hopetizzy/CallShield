@@ -37,30 +37,29 @@ This document outlines the strategic engineering roadmap, future feature specifi
 ---
 
 ## 🤖 Phase 3: AI Voice Honeypot & Call Deflection
-*Target: Milestone 2*
+*Status: Shelved / Deferred (Exploring lightweight alternative concepts)*
 
 ### 4. Autodialer Credit Waster (Honeypot Mode)
 * **Problem:** Simply hanging up costs scammers nothing.
 * **Solution:** Optionally answer the incoming VoIP call silently and loop an on-device automated audio response (e.g., fake AI hold music, continuous tone generator, or an endless automated maze).
-* **Impact:** Burns the scammer's VoIP trunk airtime and agent queue time, forcing them to blacklist your number from their dialing campaigns.
+* **Status:** Postponed to keep the APK ultra-lightweight ($<4\text{ms}$ trigger time, zero audio overhead). Alternative features will be explored to replace or enhance this phase.
 
 ---
 
 ## 🎨 Phase 4: UI/UX Redesign & Operating Cockpit
-*Target: Milestone 3*
+*Status: Completed & Active in Production*
 
-### 5. Multi-Theme HUD Engine
-Introduce interchangeable visual themes tailored to user preference:
-* **Cyberpunk Neon (Default):** High-contrast neon cyan, crimson, and OLED black.
-* **Stealth Titanium:** Minimalist luxury matte graphite, frosted glass, and subdued slate accents.
-* **Holographic Matrix:** Retro green phosphor terminal monospace aesthetic.
+### 5. Multi-Theme HUD Engine — [x] COMPLETED
+Introduce interchangeable visual themes tailored to user preference with dynamic status/nav bar integration:
+* **Cyberpunk Neon (Default):** High-contrast neon cyan `#00F0FF`, crimson `#FF0055`, and OLED black `#070A10`.
+* **Stealth Titanium:** Minimalist luxury gunmetal matte `#0C0E12`, platinum `#E2E8F0`, and emerald `#10B981`.
+* **Holographic Matrix:** Retro phosphor green `#00FF66`, deep forest `#020703`, and terminal cybergrid styling.
 
-### 6. Android Quick Settings Tile & Lockscreen Glance
-* **Quick Settings Tile:** One-tap toggle directly in the Android notification drawer to arm/disarm defense or view threat counts.
-* **Glance Widget:** Android home screen widget showing live neutralized threat telemetry.
+### 6. Android Quick Settings Tile & Notification Shade Sync — [x] COMPLETED
+* **Quick Settings Tile:** Native Android `TileService` (`CallDefenseTileService`) with real-time status subtitle (`ARMED • Defense Active` / `DISARMED`) and 1-tap arm/disarm toggle directly from notification shade.
 
-### 7. Encrypted Rule Backup & Portability
-* Export custom rule configurations and whitelist entries into an encrypted `.callshield` JSON archive for seamless transfer to new devices.
+### 7. Encrypted Rule Backup & Portability (`.callshield`) — [x] COMPLETED
+* Export and import custom rule configurations into an AES-256-GCM encrypted `.callshield` archive with PBKDF2 key derivation and secure Android `FileProvider` sharing.
 
 ---
 
