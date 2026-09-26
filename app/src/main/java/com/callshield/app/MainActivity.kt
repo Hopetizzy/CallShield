@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        instance = this
 
         // 1. Request Role & Permissions on startup
         checkAndRequestCallScreeningRole()
@@ -59,7 +60,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkAndRequestCallScreeningRole() {
+    override fun onDestroy() {
+        super.onDestroy()
+        if (instance == this) {
+            instance = null
+        }
+    }
+
+    fun checkAndRequestCallScreeningRole() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = getSystemService(Context.ROLE_SERVICE) as? RoleManager
             if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) {
@@ -71,7 +79,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkAndRequestPermissions() {
+    fun checkAndRequestPermissions() {
         val permissionsToRequest = mutableListOf<String>()
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -90,6 +98,19 @@ class MainActivity : ComponentActivity() {
 
         if (permissionsToRequest.isNotEmpty()) {
             permissionLauncher.launch(permissionsToRequest.toTypedArray())
+        }
+    }
+
+    companion object {
+        var instance: MainActivity? = null
+            private set
+
+        fun requestRole() {
+            instance?.checkAndRequestCallScreeningRole()
+        }
+
+        fun requestPermissions() {
+            instance?.checkAndRequestPermissions()
         }
     }
 }

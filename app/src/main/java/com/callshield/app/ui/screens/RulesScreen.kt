@@ -7,9 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -116,8 +114,26 @@ fun RulesScreen(viewModel: MainViewModel) {
                         )
                     }
 
-                    // Backup Export & Import Action Buttons
+                    // Action Buttons (Restore Defaults, Export, Import)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        IconButton(
+                            onClick = { 
+                                viewModel.restoreDefaultRules()
+                                Toast.makeText(context, "Default matrix rules restored!", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.RestartAlt,
+                                contentDescription = "Restore Default Rules",
+                                tint = NeonAmber,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
                         IconButton(
                             onClick = { viewModel.exportRuleBackup(context) },
                             modifier = Modifier
@@ -172,7 +188,7 @@ fun RulesScreen(viewModel: MainViewModel) {
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "AES-256 PORTABILITY: Tap ⇡ to export or ⇣ to import encrypted .callshield rule bundles.",
+                            text = "AES-256 PORTABILITY: Tap ⇡ to export, ⇣ to import, or ↺ to reload default telecom defense rules.",
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace,
                             color = TextSecondary
@@ -183,20 +199,59 @@ fun RulesScreen(viewModel: MainViewModel) {
 
             if (rules.isEmpty()) {
                 item {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(14.dp))
                             .background(CyberSurface)
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                            .border(1.dp, CyberCardBorder, RoundedCornerShape(14.dp))
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = NeonAmber,
+                            modifier = Modifier.size(40.dp)
+                        )
                         Text(
-                            text = "No filter rules configured. Tap '+' to create one.",
-                            color = TextSecondary,
-                            fontSize = 13.sp,
+                            text = "NO ACTIVE DEFENSE RULES",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
                             fontFamily = FontFamily.Monospace
                         )
+                        Text(
+                            text = "All scam and spoof pattern filters are currently empty. Restore standard Nigerian VoIP, autodialer and loan recovery patterns below.",
+                            color = TextSecondary,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Button(
+                            onClick = {
+                                viewModel.restoreDefaultRules()
+                                Toast.makeText(context, "Default rules seeded successfully!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = CyberBackground,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "RESTORE DEFENSE MATRIX RULES",
+                                color = CyberBackground,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
                     }
                 }
             } else {

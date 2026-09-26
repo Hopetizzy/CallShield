@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.IosShare
+import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.*
@@ -470,7 +471,6 @@ fun ThreatLogScreen(viewModel: MainViewModel) {
                 }
             }
         }
-    }
     }
 
     // Export Evidence Modal Sheet

@@ -33,13 +33,14 @@ abstract class CallShieldDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): CallShieldDatabase {
             return INSTANCE ?: synchronized(this) {
+                val appContext = context.applicationContext
                 val instance = Room.databaseBuilder(
-                    context.applicationContext,
+                    appContext,
                     CallShieldDatabase::class.java,
                     "callshield_database"
                 )
                 .fallbackToDestructiveMigration()
-                .addCallback(DatabaseCallback(scope))
+                .addCallback(DatabaseCallback(appContext, scope))
                 .build()
                 INSTANCE = instance
                 instance
@@ -47,13 +48,32 @@ abstract class CallShieldDatabase : RoomDatabase() {
         }
 
         private class DatabaseCallback(
+            private val context: Context,
             private val scope: CoroutineScope
         ) : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                INSTANCE?.let { database ->
-                    scope.launch {
-                        populateDefaultRules(database.ruleDao())
+                scope.launch {
+                    val database = getDatabase(context, scope)
+                    populateDefaultRules(database.ruleDao())
+                }
+            }
+
+            override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                super.onDestructiveMigration(db)
+                scope.launch {
+                    val database = getDatabase(context, scope)
+                    populateDefaultRules(database.ruleDao())
+                }
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                scope.launch {
+                    val database = getDatabase(context, scope)
+                    val dao = database.ruleDao()
+                    if (dao.getRulesCount() == 0) {
+                        populateDefaultRules(dao)
                     }
                 }
             }
@@ -65,7 +85,7 @@ abstract class CallShieldDatabase : RoomDatabase() {
                     name = "Nigeria +234 2 / 02 VoIP Trunks",
                     pattern = "+2342",
                     ruleType = RuleType.PREFIX,
-                    description = "Blocks automated PBX/VoIP trunks and Ibadan landlines used by loan sharks",
+                    description = "Blocks automated PBX/VoIP trunks and Ibadan landlines used by predatory loan sharks",
                     isEnabled = true,
                     isBuiltIn = true
                 ),
@@ -73,7 +93,7 @@ abstract class CallShieldDatabase : RoomDatabase() {
                     name = "Nigeria 0201 Virtual Trunks",
                     pattern = "+234201",
                     ruleType = RuleType.PREFIX,
-                    description = "Blocks Lagos/VoIP autodialer pools often used in recovery spam calls",
+                    description = "Blocks Lagos/VoIP autodialer pools often used in aggressive recovery spam calls",
                     isEnabled = true,
                     isBuiltIn = true
                 ),
@@ -98,7 +118,23 @@ abstract class CallShieldDatabase : RoomDatabase() {
                     pattern = "0700",
                     ruleType = RuleType.PREFIX,
                     description = "Blocks virtual commercial autodialers matching standard 0700 prefixes",
-                    isEnabled = false,
+                    isEnabled = true,
+                    isBuiltIn = true
+                ),
+                FilterRule(
+                    name = "Loan Recovery Robo-Trunk (+234 1...)",
+                    pattern = "+2341",
+                    ruleType = RuleType.PREFIX,
+                    description = "Blocks legacy Lagos commercial trunk lines utilized by automated debt collectors",
+                    isEnabled = true,
+                    isBuiltIn = true
+                ),
+                FilterRule(
+                    name = "Predatory 5+ Zero Spoof Filter",
+                    pattern = "00000",
+                    ruleType = RuleType.ZERO_REPETITION,
+                    description = "Instantly intercepts VoIP spoofed calls with 5 or more clustered zeros",
+                    isEnabled = true,
                     isBuiltIn = true
                 )
             )

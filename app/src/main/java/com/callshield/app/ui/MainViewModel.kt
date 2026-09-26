@@ -201,6 +201,12 @@ class MainViewModel(
         }
     }
 
+    fun restoreDefaultRules() {
+        viewModelScope.launch {
+            repository.restoreDefaultRules()
+        }
+    }
+
     fun addRule(
         name: String,
         pattern: String,

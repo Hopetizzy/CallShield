@@ -2,6 +2,7 @@ package com.callshield.app.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.callshield.app.data.local.CallShieldDatabase
 import com.callshield.app.data.local.dao.BlockedCallDao
 import com.callshield.app.data.local.dao.QuarantinedSmsDao
 import com.callshield.app.data.local.dao.RuleDao
@@ -11,6 +12,7 @@ import com.callshield.app.data.local.entity.QuarantinedSmsRecord
 import com.callshield.app.service.CallDefenseTileService
 import com.callshield.app.ui.theme.AppTheme
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +24,18 @@ class CallDefenseRepository(
     private val context: Context
 ) {
     private val prefs: SharedPreferences = context.getSharedPreferences("callshield_prefs", Context.MODE_PRIVATE)
+
+    init {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                if (ruleDao.getRulesCount() == 0) {
+                    CallShieldDatabase.populateDefaultRules(ruleDao)
+                }
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
+    }
 
     private val _isShieldArmed = MutableStateFlow(prefs.getBoolean(KEY_SHIELD_ARMED, true))
     val isShieldArmed: StateFlow<Boolean> = _isShieldArmed.asStateFlow()
@@ -99,6 +113,11 @@ class CallDefenseRepository(
         _isDailyDigestEnabled.value = enabled
     }
 
+    fun setTheme(theme: AppTheme) {
+        prefs.edit().putString(KEY_APP_THEME, theme.name).apply()
+        _currentTheme.value = theme
+    }
+
     fun setWeeklyDigestEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_WEEKLY_DIGEST, enabled).apply()
         _weeklyDigestEnabled.value = enabled
@@ -153,6 +172,11 @@ class CallDefenseRepository(
     suspend fun deleteRule(rule: FilterRule) = ruleDao.deleteRule(rule)
 
     suspend fun deleteRuleById(id: Long) = ruleDao.deleteRuleById(id)
+
+    suspend fun restoreDefaultRules() {
+        CallShieldDatabase.populateDefaultRules(ruleDao)
+        notifyWidgetUpdate()
+    }
 
     suspend fun toggleRule(id: Long, isEnabled: Boolean) = ruleDao.setRuleEnabled(id, isEnabled)
 

@@ -126,7 +126,69 @@ fun DashboardScreen(
             }
         }
 
-        // Quick Settings Tile Notice Banner
+        // If zero rules active, show emergency self-heal card
+        if (activeRulesCount == 0) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(NeonAmber.copy(alpha = 0.15f))
+                        .border(1.5.dp, NeonAmber, RoundedCornerShape(14.dp))
+                        .padding(16.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = NeonAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "ATTENTION: NO RULES LOADED",
+                                color = NeonAmber,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 13.sp
+                            )
+                        }
+                        Text(
+                            text = "Your scam call defense database is empty. Tap below to instantly load default Nigeria VoIP, autodialer, and loan shark rules.",
+                            color = TextPrimary,
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Button(
+                            onClick = { viewModel.restoreDefaultRules() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonAmber),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = CyberBackground,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "⚡ RESTORE DEFENSE MATRIX RULES",
+                                color = CyberBackground,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Quick Settings Tile & System Role Banner
         item {
             Box(
                 modifier = Modifier
@@ -146,13 +208,29 @@ fun DashboardScreen(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
-                    Text(
-                        text = "QUICK SETTINGS TILE: Defense toggle is synced to your Android notification shade for 1-tap arm/disarm.",
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = TextSecondary,
-                        lineHeight = 14.sp
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "SYSTEM STATUS: Quick Settings tile and Home Screen widget are synced.",
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = TextSecondary,
+                            lineHeight = 14.sp
+                        )
+                    }
+                    TextButton(
+                        onClick = {
+                            com.callshield.app.MainActivity.requestRole()
+                            com.callshield.app.MainActivity.requestPermissions()
+                        }
+                    ) {
+                        Text(
+                            text = "CHECK ROLES",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -629,6 +707,10 @@ fun DashboardScreen(
                                 fontFamily = FontFamily.Monospace
                             )
                         }
+                    }
+                }
+            }
+        }
     }
 }
 
